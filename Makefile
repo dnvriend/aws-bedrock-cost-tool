@@ -14,10 +14,10 @@ format: ## Format code with ruff
 	uv run ruff format .
 
 typecheck: ## Run type checking with mypy
-	uv run mypy aws_bedrock_cost_tool
+	uv run python -m mypy aws_bedrock_cost_tool
 
 test: ## Run tests
-	uv run pytest tests/
+	uv run python -m pytest tests/
 
 check: lint typecheck test ## Run all checks (lint, typecheck, test)
 
