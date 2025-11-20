@@ -8,11 +8,14 @@ from typing import TypedDict
 
 
 class UsageBreakdown(TypedDict):
-    """Usage breakdown by type (input/output tokens, cache)."""
+    """Usage breakdown by type (input/output tokens, cache).
+
+    Note: quantity is in millions of tokens as returned by AWS Cost Explorer.
+    """
 
     usage_type: str
     cost: float
-    quantity: float
+    quantity: float  # Millions of tokens
     estimated: bool
 
 

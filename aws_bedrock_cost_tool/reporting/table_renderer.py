@@ -71,7 +71,7 @@ def _render_standard_table(cost_data: CostData) -> None:
         print(f"\n### {model_name} (Total: {total_cost})", file=sys.stderr)
 
         if model["usage_breakdown"]:
-            headers = ["Usage Type", "Cost", "Quantity"]
+            headers = ["Usage Type", "Cost", "Tokens (M)"]
             rows = []
 
             for usage in model["usage_breakdown"]:
@@ -97,7 +97,7 @@ def _render_full_table(cost_data: CostData) -> None:
         # Usage breakdown
         if model["usage_breakdown"]:
             print("\nUsage Breakdown:", file=sys.stderr)
-            headers = ["Usage Type", "Cost", "Quantity"]
+            headers = ["Usage Type", "Cost", "Tokens (M)"]
             rows = []
 
             for usage in model["usage_breakdown"]:
