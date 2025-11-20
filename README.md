@@ -72,6 +72,7 @@ A professional CLI tool for analyzing AWS Bedrock model costs with comprehensive
 - 🎯 **Agent-Friendly**: Clear error messages, structured output, composable design
 - 📦 **Dual-Mode**: Use as CLI or import as Python library
 - 🧪 **Fully Tested**: Comprehensive test suite with type safety
+- 🔒 **Security Scanned**: Bandit, pip-audit, and gitleaks for security assurance
 
 ## Installation
 
@@ -351,17 +352,21 @@ make help
 ### Available Make Commands
 
 ```bash
-make install          # Install dependencies
-make format           # Format code with ruff
-make lint             # Run linting with ruff
-make typecheck        # Run type checking with mypy
-make test             # Run tests with pytest
-make check            # Run all checks (lint + typecheck + test)
-make pipeline         # Run full pipeline (format, lint, typecheck, test, build, install-global)
-make build            # Build package
-make install-global   # Install globally with uv tool
-make run ARGS="..."   # Run aws-bedrock-cost-tool locally
-make clean            # Remove build artifacts
+make install              # Install dependencies
+make format               # Format code with ruff
+make lint                 # Run linting with ruff
+make typecheck            # Run type checking with mypy
+make test                 # Run tests with pytest
+make security-bandit      # Run bandit security linter
+make security-pip-audit   # Run pip-audit for dependency vulnerabilities
+make security-gitleaks    # Run gitleaks secret scanner
+make security             # Run all security checks (bandit + pip-audit + gitleaks)
+make check                # Run all checks (lint + typecheck + test + security)
+make pipeline             # Run full pipeline (format, lint, typecheck, test, security, build, install-global)
+make build                # Build package
+make install-global       # Install globally with uv tool
+make run ARGS="..."       # Run aws-bedrock-cost-tool locally
+make clean                # Remove build artifacts
 ```
 
 ### Project Structure
@@ -397,6 +402,44 @@ uv run pytest tests/test_utils.py -v
 # Run with coverage
 uv run pytest tests/ --cov=aws_bedrock_cost_tool --cov-report=html
 ```
+
+### Security Scanning
+
+The project includes comprehensive security scanning tools:
+
+**Bandit** (Security Linter):
+```bash
+# Scan for common security issues
+make security-bandit
+```
+
+**pip-audit** (Dependency Vulnerabilities):
+```bash
+# Check for known vulnerabilities in dependencies
+make security-pip-audit
+```
+
+**gitleaks** (Secret Detection):
+```bash
+# Scan for leaked secrets and credentials
+make security-gitleaks
+
+# Install gitleaks if not available
+brew install gitleaks
+```
+
+**Run All Security Checks**:
+```bash
+# Run all security tools
+make security
+
+# Included in quality checks
+make check
+```
+
+Security tools configuration:
+- `.gitleaks.toml` - Secret detection rules and allowlist
+- `pyproject.toml` → `[tool.bandit]` - Security linter settings
 
 ## Resources
 
