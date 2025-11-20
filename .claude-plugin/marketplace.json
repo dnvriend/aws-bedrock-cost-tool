@@ -1,0 +1,19 @@
+{
+    "name": "aws-bedrock-cost-tool",
+    "owner": {
+        "name": "Dennis Vriend",
+        "email": "dnvriend@gmail.com",
+        "url": "https://www.linkedin.com/in/dnvriend/"
+    },
+    "metadata": {
+        "description": "Marketplace for AWS Bedrock cost analysis CLI plugin",
+        "version": "0.1.0"
+    },
+    "plugins": [
+        {
+            "name": "aws-bedrock-cost-tool",
+            "source": "./plugins/aws-bedrock-cost-tool",
+            "description": "Analyze AWS Bedrock model costs with comprehensive reporting"
+        }
+    ]
+}
