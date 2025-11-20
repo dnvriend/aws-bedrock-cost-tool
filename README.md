@@ -99,6 +99,9 @@ uv tool install dist/aws_bedrock_cost_tool-0.1.0-py3-none-any.whl
 
 # Verify installation
 aws-bedrock-cost-tool --version
+
+# Install shell completion (optional but recommended)
+./scripts/completion.sh
 ```
 
 ### Install with mise (Development)
@@ -154,6 +157,35 @@ Cost Explorer must be enabled in your AWS account:
 - Navigate to **AWS Cost Explorer** in AWS Console
 - Click **Enable Cost Explorer** if not already enabled
 - Data becomes available within 24 hours
+
+### Shell Completion (Optional)
+
+Enable tab completion for bash and zsh:
+
+**Automatic Installation**:
+```bash
+./scripts/completion.sh
+source ~/.bashrc  # or ~/.zshrc
+```
+
+**Manual Installation**:
+
+Bash (`~/.bashrc`):
+```bash
+eval "$(_AWS_BEDROCK_COST_TOOL_COMPLETE=bash_source aws-bedrock-cost-tool)"
+```
+
+Zsh (`~/.zshrc`):
+```bash
+eval "$(_AWS_BEDROCK_COST_TOOL_COMPLETE=zsh_source aws-bedrock-cost-tool)"
+```
+
+Fish (`~/.config/fish/completions/aws-bedrock-cost-tool.fish`):
+```fish
+_AWS_BEDROCK_COST_TOOL_COMPLETE=fish_source aws-bedrock-cost-tool | source
+```
+
+See [scripts/COMPLETION.md](scripts/COMPLETION.md) for details.
 
 ## Usage
 
