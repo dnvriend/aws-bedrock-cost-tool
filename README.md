@@ -1,3 +1,7 @@
+<div align="center">
+  <img src=".github/assets/logo.png" alt="AWS Bedrock Cost Tool Logo" width="200"/>
+</div>
+
 # aws-bedrock-cost-tool
 
 [![CI](https://github.com/dnvriend/aws-bedrock-cost-tool/actions/workflows/ci.yml/badge.svg)](https://github.com/dnvriend/aws-bedrock-cost-tool/actions/workflows/ci.yml)
