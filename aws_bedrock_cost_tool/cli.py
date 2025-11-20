@@ -15,6 +15,7 @@ from aws_bedrock_cost_tool.core.cost_explorer import (
     create_cost_explorer_client,
     query_bedrock_costs,
 )
+from aws_bedrock_cost_tool.logging_config import get_logger, setup_logging
 from aws_bedrock_cost_tool.reporting.json_formatter import format_as_json
 from aws_bedrock_cost_tool.reporting.plots import plot_model_bar_chart, plot_time_series
 from aws_bedrock_cost_tool.reporting.summary import format_summary
@@ -27,6 +28,8 @@ from aws_bedrock_cost_tool.utils import (
     parse_period,
     validate_period,
 )
+
+logger = get_logger(__name__)
 
 
 @click.command()
@@ -75,10 +78,10 @@ from aws_bedrock_cost_tool.utils import (
     help="Show quick summary (total + top 3 models) instead of JSON output",
 )
 @click.option(
+    "-v",
     "--verbose",
-    "-V",
-    is_flag=True,
-    help="Log API calls and processing steps to stderr",
+    count=True,
+    help="Enable verbose output (use -v for INFO, -vv for DEBUG, -vvv for TRACE)",
 )
 @click.option(
     "--quiet",
@@ -95,7 +98,7 @@ def main(
     plot_models: bool,
     all_visual: bool,
     summary_only: bool,
-    verbose: bool,
+    verbose: int,
     quiet: bool,
 ) -> None:
     """AWS Bedrock Cost Analysis Tool
@@ -127,63 +130,90 @@ def main(
 
     \b
     # Time series plot with verbose logging
-    aws-bedrock-cost-tool --plot-time --verbose
+    aws-bedrock-cost-tool --plot-time -v
+
+    \b
+    # Debug mode with detailed API calls
+    aws-bedrock-cost-tool --period 7d -vv
+
+    \b
+    # Trace mode with AWS SDK internals
+    aws-bedrock-cost-tool --period 7d -vvv
 
     \b
     # Pipe JSON to jq for automation
     aws-bedrock-cost-tool | jq '.models[] | select(.model_name | contains("Sonnet"))'
     """
+    # Setup logging based on verbosity
+    setup_logging(verbose)
+    logger.info("AWS Bedrock Cost Analysis started")
+
     try:
         # Parse and validate period
+        logger.debug(f"Parsing period: {period}")
         days = parse_period(period)
         validate_period(days)
+        logger.debug(f"Period validated: {days} days")
 
         # Calculate date range
         start_date, end_date = calculate_date_range(days)
         start_str = format_date_for_aws(start_date)
         end_str = format_date_for_aws(end_date)
+        logger.info(f"Analyzing costs from {start_str} to {end_str}")
 
         # Create Cost Explorer client
+        logger.debug("Creating AWS Cost Explorer client")
         client = create_cost_explorer_client(profile)
+        logger.debug("Cost Explorer client created")
 
         # Query costs
+        logger.info("Querying AWS Cost Explorer...")
         response = query_bedrock_costs(client, start_str, end_str, verbose=verbose)
+        logger.info("Cost data retrieved successfully")
 
         # Analyze data
+        logger.debug(f"Analyzing cost data with detail level: {detail}")
         cost_data = analyze_cost_data(response, start_str, end_str, detail=detail)
+        logger.debug(f"Found {len(cost_data['models'])} models with costs")
 
         # Check for empty results
         if cost_data["total_cost"] == 0:
             if not quiet:
-                print(
-                    f"No Bedrock costs found for period {period} ({start_str} to {end_str}).",
-                    file=sys.stderr,
+                logger.warning(
+                    f"No Bedrock costs found for period {period} ({start_str} to {end_str})"
                 )
-                print(
-                    "Check if Bedrock was used during this period or try a longer period.",
-                    file=sys.stderr,
+                logger.warning(
+                    "Check if Bedrock was used during this period or try a longer period"
                 )
             sys.exit(0)
 
         # Determine output mode
         visual_mode = table or plot_time or plot_models or all_visual or summary_only
+        logger.debug(f"Output mode: {'visual' if visual_mode else 'JSON'}")
 
         if visual_mode:
             # Visual output modes (to stderr)
             if summary_only:
+                logger.debug("Generating summary output")
                 print(format_summary(cost_data))
             else:
                 if table or all_visual:
+                    logger.debug("Rendering cost table")
                     render_table(cost_data, detail=detail)
 
                 if plot_time or all_visual:
+                    logger.debug("Generating time series plot")
                     plot_time_series(cost_data)
 
                 if plot_models or all_visual:
+                    logger.debug("Generating model bar chart")
                     plot_model_bar_chart(cost_data)
         else:
             # Default: JSON to stdout
+            logger.debug("Outputting JSON to stdout")
             print(format_as_json(cost_data))
+
+        logger.info("Analysis completed successfully")
 
     except PeriodParseError as e:
         click.echo(f"Error: {e}", err=True)
@@ -202,10 +232,8 @@ def main(
         sys.exit(1)
 
     except Exception as e:
-        if verbose:
-            import traceback
-
-            traceback.print_exc(file=sys.stderr)
+        logger.error(f"Unexpected error: {e}")
+        logger.debug("Full traceback:", exc_info=True)
         click.echo(f"Unexpected error: {e}", err=True)
         sys.exit(1)
 

@@ -4,10 +4,13 @@ Note: This code was generated with assistance from AI coding tools
 and has been reviewed and tested by a human.
 """
 
+import logging
 from typing import Any
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError, NoCredentialsError
+
+logger = logging.getLogger(__name__)
 
 
 class CostExplorerError(Exception):
@@ -114,7 +117,7 @@ def create_cost_explorer_client(profile_name: str | None = None) -> Any:
 
 
 def query_bedrock_costs(
-    client: Any, start_date: str, end_date: str, verbose: bool = False
+    client: Any, start_date: str, end_date: str, verbose: bool | int = False
 ) -> dict[str, Any]:
     """Query Cost Explorer for Bedrock model costs.
 
@@ -122,7 +125,7 @@ def query_bedrock_costs(
         client: boto3 Cost Explorer client
         start_date: Start date in YYYY-MM-DD format
         end_date: End date in YYYY-MM-DD format
-        verbose: Log progress messages to stderr
+        verbose: Enable verbose logging (bool or int count for compatibility)
 
     Returns:
         Raw Cost Explorer API response
@@ -132,13 +135,8 @@ def query_bedrock_costs(
         CostExplorerError: If API call fails
     """
     try:
-        if verbose:
-            import sys
-
-            print(
-                f"Querying AWS Cost Explorer for period {start_date} to {end_date}...",
-                file=sys.stderr,
-            )
+        logger.debug(f"Querying Cost Explorer for period {start_date} to {end_date}")
+        logger.debug("Building Cost Explorer API request")
 
         response = client.get_cost_and_usage(
             TimePeriod={"Start": start_date, "End": end_date},
@@ -151,11 +149,9 @@ def query_bedrock_costs(
             Filter={"Dimensions": {"Key": "SERVICE", "Values": get_bedrock_models()}},
         )
 
-        if verbose:
-            import sys
-
-            result_count = sum(len(r.get("Groups", [])) for r in response.get("ResultsByTime", []))
-            print(f"Processing {result_count} cost records...", file=sys.stderr)
+        result_count = sum(len(r.get("Groups", [])) for r in response.get("ResultsByTime", []))
+        logger.debug(f"Received {result_count} cost records from Cost Explorer")
+        logger.debug(f"Response contains {len(response.get('ResultsByTime', []))} time periods")
 
         return dict(response)
 

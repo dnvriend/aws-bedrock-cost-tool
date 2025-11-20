@@ -17,6 +17,7 @@ from aws_bedrock_cost_tool.core.models import (
     ModelCost,
     UsageBreakdown,
 )
+from aws_bedrock_cost_tool.logging_config import get_logger, setup_logging
 from aws_bedrock_cost_tool.utils import (
     calculate_date_range,
     format_date_for_aws,
@@ -44,4 +45,7 @@ __all__ = [
     "validate_period",
     "calculate_date_range",
     "format_date_for_aws",
+    # Logging
+    "setup_logging",
+    "get_logger",
 ]
