@@ -16,6 +16,12 @@ from aws_bedrock_cost_tool.core.cost_explorer import (
     query_bedrock_costs,
 )
 from aws_bedrock_cost_tool.logging_config import get_logger, setup_logging
+from aws_bedrock_cost_tool.reporting.iterm2_plots import (
+    is_iterm2,
+    plot_all_iterm2,
+    plot_model_costs_iterm2,
+    plot_time_series_iterm2,
+)
 from aws_bedrock_cost_tool.reporting.json_formatter import format_as_json
 from aws_bedrock_cost_tool.reporting.plots import plot_model_bar_chart, plot_time_series
 from aws_bedrock_cost_tool.reporting.summary import format_summary
@@ -73,9 +79,14 @@ logger = get_logger(__name__)
     help="Show all visualizations (table + time series + bar chart) instead of JSON output",
 )
 @click.option(
-    "--summary-only",
+    "--plot-image",
     is_flag=True,
-    help="Show quick summary (total + top 3 models) instead of JSON output",
+    help="Show matplotlib plots inline in iTerm2 (high-quality graphics)",
+)
+@click.option(
+    "--summary",
+    is_flag=True,
+    help="Show summary with total, all models, token usage, and cache statistics",
 )
 @click.option(
     "-v",
@@ -97,7 +108,8 @@ def main(
     plot_time: bool,
     plot_models: bool,
     all_visual: bool,
-    summary_only: bool,
+    plot_image: bool,
+    summary: bool,
     verbose: int,
     quiet: bool,
 ) -> None:
@@ -113,8 +125,8 @@ def main(
     aws-bedrock-cost-tool
 
     \b
-    # Quick summary (total + top 3 models)
-    aws-bedrock-cost-tool --summary-only
+    # Summary with all models
+    aws-bedrock-cost-tool --summary
 
     \b
     # Visual table for last 90 days
@@ -131,6 +143,10 @@ def main(
     \b
     # Time series plot with verbose logging
     aws-bedrock-cost-tool --plot-time -v
+
+    \b
+    # High-quality matplotlib plots in iTerm2
+    aws-bedrock-cost-tool --plot-image
 
     \b
     # Debug mode with detailed API calls
@@ -188,26 +204,43 @@ def main(
             sys.exit(0)
 
         # Determine output mode
-        visual_mode = table or plot_time or plot_models or all_visual or summary_only
+        visual_mode = table or plot_time or plot_models or all_visual or plot_image or summary
         logger.debug(f"Output mode: {'visual' if visual_mode else 'JSON'}")
 
         if visual_mode:
-            # Visual output modes (to stderr)
-            if summary_only:
+            # Visual output modes
+            if summary:
                 logger.debug("Generating summary output")
                 print(format_summary(cost_data))
+            elif plot_image:
+                # iTerm2 matplotlib plots
+                logger.debug("Generating iTerm2 matplotlib plots")
+                if not is_iterm2():
+                    logger.warning("Not running in iTerm2, images may not display correctly")
+                plot_all_iterm2(cost_data)
             else:
+                # Check if running in iTerm2 for matplotlib plots
+                use_iterm2 = is_iterm2()
+
                 if table or all_visual:
                     logger.debug("Rendering cost table")
                     render_table(cost_data, detail=detail)
 
                 if plot_time or all_visual:
-                    logger.debug("Generating time series plot")
-                    plot_time_series(cost_data)
+                    if use_iterm2:
+                        logger.debug("Generating iTerm2 time series plot")
+                        plot_time_series_iterm2(cost_data)
+                    else:
+                        logger.debug("Generating ASCII time series plot")
+                        plot_time_series(cost_data)
 
                 if plot_models or all_visual:
-                    logger.debug("Generating model bar chart")
-                    plot_model_bar_chart(cost_data)
+                    if use_iterm2:
+                        logger.debug("Generating iTerm2 model bar chart")
+                        plot_model_costs_iterm2(cost_data)
+                    else:
+                        logger.debug("Generating ASCII model bar chart")
+                        plot_model_bar_chart(cost_data)
         else:
             # Default: JSON to stdout
             logger.debug("Outputting JSON to stdout")

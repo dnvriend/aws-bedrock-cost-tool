@@ -7,33 +7,54 @@ and has been reviewed and tested by a human.
 from aws_bedrock_cost_tool.core.models import CostData
 
 
-def format_summary(cost_data: CostData) -> str:
-    """Format cost data as quick summary string.
+def _format_tokens(tokens_millions: float) -> str:
+    """Format token count in millions with appropriate precision.
 
-    Shows total cost and top 3 models.
-    Format: "Total: $X.XX | Top: Model1 ($Y), Model2 ($Z), Model3 ($W)"
+    Args:
+        tokens_millions: Token count in millions
+
+    Returns:
+        Formatted string like "~64M tokens" or "~1.2M tokens"
+    """
+    if tokens_millions >= 1.0:
+        return f"~{tokens_millions:.0f}M tokens"
+    elif tokens_millions >= 0.01:
+        return f"~{tokens_millions:.2f}M tokens"
+    else:
+        return f"~{tokens_millions:.3f}M tokens"
+
+
+def format_summary(cost_data: CostData) -> str:
+    """Format cost data as summary string.
+
+    Shows total cost and all models with their costs and token usage.
 
     Args:
         cost_data: Analyzed cost data
 
     Returns:
-        Summary string
+        Summary string with total and all models
     """
+    lines = []
+
     # Format total cost with estimated indicator
     if cost_data["has_estimated"]:
         total_str = f"~${cost_data['total_cost']:.2f}"
     else:
         total_str = f"${cost_data['total_cost']:.2f}"
 
-    # Get top 3 models
-    top_models = cost_data["models"][:3]
+    lines.append(f"Total: {total_str}")
+    lines.append("")
 
-    if not top_models:
-        return f"Total: {total_str} | No Bedrock usage found"
+    models = cost_data["models"]
 
-    # Format top models
-    model_strs = []
-    for model in top_models:
+    if not models:
+        lines.append("No Bedrock usage found")
+        return "\n".join(lines)
+
+    # Format all models
+    lines.append("Models:")
+    for model in models:
         # Shorten model name (remove " (Amazon Bedrock Edition)")
         short_name = model["model_name"].replace(" (Amazon Bedrock Edition)", "")
 
@@ -43,8 +64,42 @@ def format_summary(cost_data: CostData) -> str:
         else:
             cost_str = f"${model['total_cost']:.2f}"
 
-        model_strs.append(f"{short_name} ({cost_str})")
+        # Calculate tokens from usage breakdown (quantity is in millions)
+        usage_breakdown = model.get("usage_breakdown", [])
 
-    top_str = ", ".join(model_strs)
+        # Input/output tokens (not cache)
+        io_tokens = sum(
+            usage["quantity"]
+            for usage in usage_breakdown
+            if (
+                "InputTokenCount" in usage["usage_type"]
+                or "OutputTokenCount" in usage["usage_type"]
+            )
+            and "Cache" not in usage["usage_type"]
+        )
 
-    return f"Total: {total_str} | Top: {top_str}"
+        # Cache read tokens
+        cache_read_tokens = sum(
+            usage["quantity"] for usage in usage_breakdown if "CacheRead" in usage["usage_type"]
+        )
+
+        # Cache write tokens
+        cache_write_tokens = sum(
+            usage["quantity"] for usage in usage_breakdown if "CacheWrite" in usage["usage_type"]
+        )
+
+        # Build token info parts
+        token_parts = []
+        if io_tokens > 0:
+            token_parts.append(_format_tokens(io_tokens))
+        if cache_read_tokens > 0:
+            token_parts.append(f"cache read: {_format_tokens(cache_read_tokens)}")
+        if cache_write_tokens > 0:
+            token_parts.append(f"cache write: {_format_tokens(cache_write_tokens)}")
+
+        if token_parts:
+            lines.append(f"  {short_name}: {cost_str} ({', '.join(token_parts)})")
+        else:
+            lines.append(f"  {short_name}: {cost_str}")
+
+    return "\n".join(lines)

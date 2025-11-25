@@ -8,6 +8,7 @@ dependencies = [
     "click>=8.1.7",
     "termplotlib>=0.3.9",
     "termtables>=0.2.4",
+    "matplotlib>=3.8.0",
 ]
 authors = [
     {name = "Dennis Vriend", email = "dvriend@ilionx.com"}

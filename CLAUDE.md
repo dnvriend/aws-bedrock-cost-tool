@@ -33,7 +33,7 @@ aws_bedrock_cost_tool/
 └── reporting/               # Reporting and visualization modules
     ├── __init__.py
     ├── json_formatter.py   # JSON output formatting
-    ├── summary.py          # Quick summary formatting (--summary-only)
+    ├── summary.py          # Summary formatting (--summary)
     ├── table_renderer.py   # termtables rendering (--table)
     └── plots.py            # termplotlib charts (--plot-time, --plot-models)
 ```
@@ -77,7 +77,7 @@ aws_bedrock_cost_tool/
 
 **reporting/**:
 - `json_formatter.py`: Convert `CostData` to JSON string
-- `summary.py`: Format quick summary (total + top 3 models)
+- `summary.py`: Format summary with all models, token usage, and cache statistics
 - `table_renderer.py`: Render tables with termtables (supports all detail levels)
 - `plots.py`: Create ASCII plots with termplotlib (time series, bar charts)
 
@@ -109,10 +109,11 @@ aws-bedrock-cost-tool [OPTIONS]
 **Output Modes** (mutually exclusive, suppress JSON if used):
 - Default: JSON to stdout
 - `--table` - Summary table (termtables)
-- `--plot-time` - Time series plot (cost over time)
-- `--plot-models` - Bar chart (cost by model)
-- `--all-visual` - All visualizations (table + both plots)
-- `--summary-only` - Quick summary (total + top 3 models)
+- `--plot-time` - Time series plot, ASCII (cost over time)
+- `--plot-models` - Bar chart, ASCII (cost by model)
+- `--all-visual` - All ASCII visualizations (table + both plots)
+- `--plot-image` - Matplotlib plots inline in iTerm2 (high-quality graphics)
+- `--summary` - Summary with all models, token usage, and cache statistics
 
 **Detail Level** (applies to all outputs):
 - `--detail basic|standard|full` (default: standard)
@@ -132,8 +133,8 @@ aws-bedrock-cost-tool [OPTIONS]
 # Default: JSON output, last 30 days
 aws-bedrock-cost-tool
 
-# Quick summary
-aws-bedrock-cost-tool --summary-only
+# Summary with all models, tokens, and cache
+aws-bedrock-cost-tool --summary
 
 # Visual table for last 90 days
 aws-bedrock-cost-tool --period 90d --table
@@ -146,6 +147,9 @@ aws-bedrock-cost-tool --period 2w --profile production
 
 # Time series plot with verbose logging
 aws-bedrock-cost-tool --plot-time --verbose
+
+# High-quality matplotlib plots in iTerm2
+aws-bedrock-cost-tool --plot-image
 
 # Pipe JSON to jq for automation
 aws-bedrock-cost-tool | jq '.models[] | select(.model_name | contains("Sonnet"))'
