@@ -42,6 +42,7 @@ def get_bedrock_models() -> list[str]:
         "Claude Sonnet 4 (Amazon Bedrock Edition)",
         "Claude Sonnet 4.5 (Amazon Bedrock Edition)",
         "Claude Haiku 4.5 (Amazon Bedrock Edition)",
+        "Claude Opus 4.5 (Amazon Bedrock Edition)",
         "Claude Opus 4.1 (Amazon Bedrock Edition)",
         "Claude 3 Haiku (Amazon Bedrock Edition)",
         "Claude 3 Sonnet (Amazon Bedrock Edition)",
