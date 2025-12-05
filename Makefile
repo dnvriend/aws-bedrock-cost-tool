@@ -43,10 +43,11 @@ clean: ## Remove build artifacts and cache
 run: ## Run aws-bedrock-cost-tool (usage: make run ARGS="...")
 	uv run aws-bedrock-cost-tool $(ARGS)
 
-build: ## Build package
-	uv build
+build: ## Build package (force rebuild)
+	uv build --force-pep517
 
-install-global: ## Install globally with uv tool
+install-global: build ## Install globally with uv tool (rebuilds first to avoid cache issues)
+	-uv tool uninstall aws-bedrock-cost-tool 2>/dev/null
 	uv tool install . --reinstall
 
 uninstall-global: ## Uninstall global installation
